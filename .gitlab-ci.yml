@@ -1,0 +1,61 @@
+workflow:
+  rules:
+    - if: $CI_COMMIT_BRANCH == "dev"
+      when: always
+    - if: $CI_COMMIT_BRANCH == "develop"
+      when: always
+
+variables:
+  UPSTREAM_COMMIT_BRANCH: $CI_COMMIT_BRANCH
+  UPSTREAM_BRANCH_SLUG: $CI_COMMIT_REF_SLUG
+  UPSTREAM_COMMIT_MESSAGE: $CI_COMMIT_MESSAGE
+  UPSTREAM_PROJECT_PATH: $CI_PROJECT_PATH
+  UPSTREAM_PROJECT_PATH_SLUG: $CI_PROJECT_PATH_SLUG
+  UPSTREAM_PROJECT_NAME: $CI_PROJECT_NAME
+
+stages: # List of stages for jobs, and their order of execution
+  - pre
+  - build
+  - test
+
+build-vneid-hosted-form:
+  # stage: pre
+  # trigger:
+  #   include: .build-pipeline.yml
+  image:
+    name: gcr.io/kaniko-project/executor:debug
+    entrypoint: [""]
+  stage: build
+  script:
+    - pwd
+    - ls
+    - export IMAGE_TAG=$(TZ=UTC-7 date +%y%m%d-%H%M)
+    - echo "Compiling the code..."
+    - echo $IMAGE_TAG
+
+    - echo $CI_REGISTRY
+    - echo $CI_REGISTRY_USER
+    - echo $CI_REGISTRY_PASSWORD
+    - echo $CI_REGISTRY_IMAGE
+    - echo $CI_COMMIT_TAG
+
+    - mkdir -p /kaniko/.docker
+    - echo "{\"auths\":{\"${CI_REGISTRY}\":{\"auth\":\"$(printf "%s:%s" "${CI_REGISTRY_USER}" "${CI_REGISTRY_PASSWORD}" | base64 | tr -d '\n')\"}}}" > /kaniko/.docker/config.json
+
+    - export IMAGE_REGISTRY_DEST=${CI_REGISTRY_IMAGE};
+    # - export IMAGE_REGISTRY_DEST=${CI_REGISTRY_IMAGE}/${UPSTREAM_PROJECT_NAME}-${UPSTREAM_SUB_SERVICE_NAME};
+
+    - echo $IMAGE_REGISTRY_DEST
+
+    - >-
+      /kaniko/executor
+      --context .
+      --dockerfile /Dockerfile
+      --destination ${IMAGE_REGISTRY_DEST}:${IMAGE_TAG}
+
+    - echo "Compile complete."
+  only:
+    changes:
+      - src/**/*
+      - package.json
+      - tsconfig.json

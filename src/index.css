@@ -1,0 +1,12 @@
+body {
+  margin: 0;
+  font-family: var(--text-font-main);
+  color: var(--text-color-black-main);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: var(--text-font-main);
+  color: var(--text-color-black-main);
+}
